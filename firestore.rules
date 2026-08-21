@@ -1,0 +1,123 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Security Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isEmailOwner(email) {
+      return isSignedIn() && request.auth.token.email != null && request.auth.token.email.lower() == email.lower();
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email != null && (
+          request.auth.token.email.lower() == 'admin@student.ai' ||
+          request.auth.token.email.lower() == 'dilnuramadaminova06@gmail.com'
+        )) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // 1. Subjects & Quiz Question Banks
+    match /subjects/{subjectId} {
+      allow read: if isValidId(subjectId) && (
+        resource == null ||
+        resource.data.creator == 'system' ||
+        isAdmin() ||
+        (isSignedIn() && resource.data.creator == request.auth.token.email)
+      );
+      allow create, update: if isValidId(subjectId) && isSignedIn() && (
+        isAdmin() ||
+        (request.resource.data.creator == request.auth.token.email)
+      ) && request.resource.data.name is string && request.resource.data.name.size() <= 200;
+      allow delete: if isValidId(subjectId) && isSignedIn() && (
+        isAdmin() ||
+        (resource != null && resource.data.creator == request.auth.token.email)
+      );
+    }
+
+    // 2. User Personal Data, Chats & Wallets
+    match /user_data/{userId} {
+      allow read, write: if isValidId(userId) && (isOwner(userId) || isAdmin());
+    }
+
+    // 3. Registered User Accounts
+    match /users/{userId} {
+      allow read: if isValidId(userId) && (isOwner(userId) || isAdmin() || isSignedIn());
+      allow create, update: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 4. WebAuthn Hardware Biometric Credentials
+    match /webauthn_credentials/{credId} {
+      allow read: if isValidId(credId) && (
+        isAdmin() ||
+        (isSignedIn() && resource != null && resource.data.email == request.auth.token.email)
+      );
+      allow create, update: if isValidId(credId) && isSignedIn() && (
+        isAdmin() || request.resource.data.email == request.auth.token.email
+      );
+      allow delete: if isValidId(credId) && (
+        isAdmin() || (isSignedIn() && resource != null && resource.data.email == request.auth.token.email)
+      );
+    }
+
+    // 5. System Notifications
+    match /notifications/{notifId} {
+      allow read: if isValidId(notifId) && (
+        resource == null ||
+        resource.data.target == 'all' ||
+        isAdmin() ||
+        (isSignedIn() && resource.data.target == request.auth.token.email)
+      );
+      allow write: if isValidId(notifId) && isAdmin();
+    }
+
+    // 6. Student Marketplace Orders & Freelance Jobs
+    match /orders/{orderId} {
+      allow read: if isValidId(orderId) && isSignedIn();
+      allow create, update: if isValidId(orderId) && isSignedIn();
+      allow delete: if isValidId(orderId) && (isAdmin() || (resource != null && resource.data.authorEmail == request.auth.token.email));
+    }
+
+    match /jobs/{jobId} {
+      allow read: if isValidId(jobId) && isSignedIn();
+      allow create, update: if isValidId(jobId) && isSignedIn();
+      allow delete: if isValidId(jobId) && (isAdmin() || (resource != null && resource.data.clientEmail == request.auth.token.email));
+    }
+
+    // 7. Promocodes & System Section Lock Configurations
+    match /promocodes/{promoId} {
+      allow read: if isValidId(promoId) && isSignedIn();
+      allow write: if isValidId(promoId) && isAdmin();
+    }
+
+    match /section_locks/{lockId} {
+      allow read: if true;
+      allow write: if isValidId(lockId) && isAdmin();
+    }
+
+    // 8. Cybersecurity Threat Logs
+    match /security_logs/{logId} {
+      allow read: if isValidId(logId) && isAdmin();
+      allow create: if isValidId(logId);
+      allow update, delete: if isValidId(logId) && isAdmin();
+    }
+
+    // Catch-all Default-Deny Security Guard
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
