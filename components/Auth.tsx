@@ -33,15 +33,32 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onBack }) => {
     setLoadingProvider('email');
 
     try {
+      const cleanEmail = formData.email.trim().toLowerCase();
+      const password = formData.password;
+
+      if (!cleanEmail || !password) {
+        setError("Email va parolni kiriting!");
+        setLoading(false);
+        setLoadingProvider(null);
+        return;
+      }
+
       if (isLogin) {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email.trim().toLowerCase(), password: formData.password })
+          body: JSON.stringify({ email: cleanEmail, password })
         });
-        const data = await res.json();
         
-        if (!res.ok) {
+        const text = await res.text();
+        let data: any = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { error: "Server kutilmagan javob qaytardi" };
+        }
+        
+        if (!res.ok || !data.user) {
           setError(data.error || t('email') + " yoki " + t('password') + " noto'g'ri!");
           setLoading(false);
           setLoadingProvider(null);
@@ -60,13 +77,20 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onBack }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: formData.name.trim(),
-            email: formData.email.trim().toLowerCase(),
-            password: formData.password
+            email: cleanEmail,
+            password: password
           })
         });
-        const data = await res.json();
         
-        if (!res.ok) {
+        const text = await res.text();
+        let data: any = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { error: "Server kutilmagan javob qaytardi" };
+        }
+        
+        if (!res.ok || !data.user) {
           setError(data.error || "Ro'yxatdan o'tishda xatolik yuz berdi");
           setLoading(false);
           setLoadingProvider(null);
@@ -81,7 +105,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onBack }) => {
         });
       }
     } catch (err: any) {
-      setError("Server bilan ulanishda xatolik yuz berdi: " + (err.message || 'Tarmoq xatosi'));
+      console.error("Auth submission error:", err);
+      setError("Server bilan ulanishda xatolik: " + (err.message || 'Tarmoq xatosi'));
     } finally {
       setLoading(false);
       setLoadingProvider(null);

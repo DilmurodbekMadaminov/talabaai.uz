@@ -69,8 +69,8 @@ export const dbService = {
         body: JSON.stringify({ email, avatar: avatarDataUrl })
       });
       if (res.ok) {
-        const data = await res.json();
-        return data;
+        const text = await res.text();
+        return text ? JSON.parse(text) : null;
       }
       return null;
     } catch (e) {
@@ -119,8 +119,14 @@ export const dbService = {
       if (!res.ok) {
         throw new Error('Google authentication backend sync failed');
       }
-      const data = await res.json();
-      return data.user as User;
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      return (data.user || {
+        name: googleData.name,
+        email: googleData.email,
+        photoURL: googleData.photoURL,
+        isAdmin: googleData.email === 'dilnuramadaminova06@gmail.com'
+      }) as User;
     } catch (e) {
       console.error("googleLogin failed", e);
       return {
@@ -141,8 +147,14 @@ export const dbService = {
       if (!res.ok) {
         throw new Error('GitHub authentication backend sync failed');
       }
-      const data = await res.json();
-      return data.user as User;
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      return (data.user || {
+        name: githubData.name,
+        email: githubData.email,
+        photoURL: githubData.photoURL,
+        isAdmin: githubData.email === 'dilnuramadaminova06@gmail.com'
+      }) as User;
     } catch (e) {
       console.error("githubLogin failed", e);
       return {
@@ -237,7 +249,8 @@ export const dbService = {
         } catch (e) {}
         throw new Error(errMsg);
       }
-      return await res.json();
+      const text = await res.text();
+      return text ? JSON.parse(text) : {};
     } catch (e: any) {
       console.error(e);
       throw e;
@@ -361,7 +374,8 @@ export const dbService = {
     try {
       const res = await fetch('/api/system/section-locks');
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : null;
         if (data && typeof data === 'object') {
           localStorage.setItem('st_ai_section_locks_cache', JSON.stringify(data));
           return data as SectionLockMap;

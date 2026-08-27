@@ -964,36 +964,81 @@ async function startServer() {
 
   // Auth & Users
   app.post("/api/auth/register", async (req, res) => {
-    const users = await getUsersWithSequentialIds();
-    const newUser = req.body;
-    if (users.some((u: any) => u.email === newUser.email)) {
-      return res.status(400).json({ error: "Ushbu email allaqachon ro'yxatdan o'tgan!" });
+    try {
+      const users = await getUsersWithSequentialIds();
+      const { email, name, password } = req.body || {};
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email va parol kiritilishi shart!" });
+      }
+      const cleanEmail = String(email).toLowerCase().trim();
+      if (users.some((u: any) => (u.email || '').toLowerCase().trim() === cleanEmail)) {
+        return res.status(400).json({ error: "Ushbu email allaqachon ro'yxatdan o'tgan!" });
+      }
+      
+      const isOwnerAdmin = users.length === 0 || cleanEmail === 'dilnuramadaminova06@gmail.com';
+      const maxId = users.reduce((max: number, u: any) => (u.id && u.id > max ? u.id : max), 0);
+      const newUser = {
+        id: maxId + 1,
+        email: cleanEmail,
+        name: (name || cleanEmail.split('@')[0]).trim(),
+        password: String(password),
+        photoURL: "",
+        isAdmin: isOwnerAdmin,
+        role: isOwnerAdmin ? 'SUPER_ADMIN' : 'USER',
+        createdAt: new Date(),
+        authProvider: 'password'
+      };
+      users.push(newUser);
+      await writeData("users", users);
+
+      // Sync user document to Cloud Firestore
+      const db = await getFirestoreDb();
+      if (db) {
+        try {
+          const { doc, setDoc } = await import('firebase/firestore') as any;
+          await setDoc(doc(db, 'users', String(newUser.id)), {
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            photoURL: '',
+            isAdmin: !!newUser.isAdmin,
+            role: newUser.role,
+            authProvider: 'password',
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (err: any) {
+          console.warn("[Firestore Sync Register Warning]:", err.message);
+        }
+      }
+
+      return res.status(200).json({ user: newUser });
+    } catch (err: any) {
+      console.error("[Register Endpoint Error]:", err);
+      return res.status(500).json({ error: "Ro'yxatdan o'tishda server xatosi: " + (err.message || 'Server error') });
     }
-    
-    if (users.length === 0) {
-       newUser.isAdmin = true;
-       newUser.role = 'SUPER_ADMIN';
-    } else {
-       newUser.isAdmin = false;
-       newUser.role = 'USER';
-    }
-    
-    const maxId = users.reduce((max: number, u: any) => (u.id && u.id > max ? u.id : max), 0);
-    newUser.id = maxId + 1;
-    newUser.createdAt = new Date();
-    users.push(newUser);
-    await writeData("users", users);
-    res.json({ user: newUser });
   });
 
   app.post("/api/auth/login", async (req, res) => {
-    const users = await getUsersWithSequentialIds();
-    const { email, password } = req.body;
-    const user = users.find((u: any) => u.email === email && u.password === password);
-    if (!user) {
-      return res.status(401).json({ error: "Email yoki parol noto'g'ri!" });
+    try {
+      const users = await getUsersWithSequentialIds();
+      const { email, password } = req.body || {};
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email va parol kiritilishi shart!" });
+      }
+      const cleanEmail = String(email).toLowerCase().trim();
+      const user = users.find((u: any) => (u.email || '').toLowerCase().trim() === cleanEmail && String(u.password) === String(password));
+      if (!user) {
+        return res.status(401).json({ error: "Email yoki parol noto'g'ri!" });
+      }
+      if (cleanEmail === 'dilnuramadaminova06@gmail.com') {
+        user.isAdmin = true;
+        user.role = 'SUPER_ADMIN';
+      }
+      return res.status(200).json({ user });
+    } catch (err: any) {
+      console.error("[Login Endpoint Error]:", err);
+      return res.status(500).json({ error: "Kirishda server xatosi: " + (err.message || 'Server error') });
     }
-    res.json({ user });
   });
 
   app.post("/api/auth/google", async (req, res) => {
