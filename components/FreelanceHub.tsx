@@ -9,6 +9,7 @@ import {
 import { FreelanceProject, FreelanceChatMessage, FreelanceBid, FreelanceChat } from '../types';
 import { FreelanceChatView } from './FreelanceChatView';
 import { FreelanceJobModal } from './FreelanceJobModal';
+import { getAbsoluteApiUrl } from '../services/apiConfig';
 
 interface FreelanceHubProps {
   user?: any;
@@ -297,7 +298,7 @@ export const FreelanceHub: React.FC<FreelanceHubProps> = ({ user }) => {
     const updatedBids = bids.map((b: any) => b.id === bidId ? { ...b, status: newStatus } : b);
     setBids(updatedBids);
     try {
-      await fetch('/api/freelance/bids', {
+      await fetch(getAbsoluteApiUrl('/api/freelance/bids'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedBids)
@@ -310,7 +311,7 @@ export const FreelanceHub: React.FC<FreelanceHubProps> = ({ user }) => {
 
   const fetchJobs = async () => {
     try {
-      const res = await fetch('/api/freelance/jobs');
+      const res = await fetch(getAbsoluteApiUrl('/api/freelance/jobs'));
       const data = await res.json();
       if (data.length > 0) {
         setProjects(data);
@@ -578,7 +579,7 @@ export const FreelanceHub: React.FC<FreelanceHubProps> = ({ user }) => {
 
   const fetchBids = async () => {
     try {
-      const res = await fetch('/api/freelance/bids');
+      const res = await fetch(getAbsoluteApiUrl('/api/freelance/bids'));
       const data = await res.json();
       setBids(data);
     } catch (e) {
@@ -612,7 +613,7 @@ export const FreelanceHub: React.FC<FreelanceHubProps> = ({ user }) => {
     };
 
     try {
-      const res = await fetch('/api/freelance/jobs', {
+      const res = await fetch(getAbsoluteApiUrl('/api/freelance/jobs'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newJob)
@@ -637,7 +638,7 @@ export const FreelanceHub: React.FC<FreelanceHubProps> = ({ user }) => {
   const submitBid = async () => {
     if (!biddingProject || !bidAmount || !bidDays || !bidProposal) return;
     try {
-      await fetch('/api/freelance/bids', {
+      await fetch(getAbsoluteApiUrl('/api/freelance/bids'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -672,7 +673,7 @@ export const FreelanceHub: React.FC<FreelanceHubProps> = ({ user }) => {
     }
     setIsGeneratingSpec(true);
     try {
-      const res = await fetch('/api/freelance/ai/spec', {
+      const res = await fetch(getAbsoluteApiUrl('/api/freelance/ai/spec'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idea: formTitle })

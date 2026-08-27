@@ -1,6 +1,7 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { QuizResult } from "../types";
+import { getAbsoluteApiUrl } from "./apiConfig";
 
 const API_BASE = "/api/ai";
 
@@ -36,7 +37,7 @@ async function callAI(model: string, contents: any, config: any = {}) {
     payload.apiKey = userApiKey;
   }
 
-  const response = await fetch(`${API_BASE}/generate`, {
+  const response = await fetch(getAbsoluteApiUrl(`${API_BASE}/generate`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -119,7 +120,7 @@ export const streamSearchChatResponse = async (
   let candidates: any = undefined;
 
   try {
-    const response = await fetch(`${API_BASE}/chat`, {
+    const response = await fetch(getAbsoluteApiUrl(`${API_BASE}/chat`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
@@ -208,7 +209,7 @@ export const generateImage = async (prompt: string, aspectRatio: string = "1:1")
 // AionUi Image Generation Call
 export const generateAionUiImage = async (prompt: string, aspectRatio: string = "1:1") => {
   try {
-    const response = await fetch('/api/ai/aionui/image', {
+    const response = await fetch(getAbsoluteApiUrl('/api/ai/aionui/image'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, aspectRatio })
@@ -324,7 +325,7 @@ export const generateVideo = async (
       } catch (e) {}
     }
 
-    const response = await fetch('/api/ai/video', {
+    const response = await fetch(getAbsoluteApiUrl('/api/ai/video'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, base64Image, aspectRatio, apiKey: userApiKey })
@@ -372,7 +373,7 @@ export const generateVideo = async (
         }
       }
 
-      const statusRes = await fetch('/api/ai/video-status', {
+      const statusRes = await fetch(getAbsoluteApiUrl('/api/ai/video-status'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ operationName, apiKey: userApiKey })
@@ -387,7 +388,7 @@ export const generateVideo = async (
     if (onProgress) onProgress("Tayyor bo'lgan video faylni yuklab olinmoqda...");
 
     // Now call download
-    const downloadResponse = await fetch('/api/ai/video/download', {
+    const downloadResponse = await fetch(getAbsoluteApiUrl('/api/ai/video/download'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ operationName, apiKey: userApiKey })
@@ -598,7 +599,7 @@ export const generateQuizFromPDF = async (file: File, difficulty: string = 'medi
     }
     if (userApiKey) formData.append('apiKey', userApiKey);
 
-    const response = await fetch('/api/test/generate', {
+    const response = await fetch(getAbsoluteApiUrl('/api/test/generate'), {
       method: 'POST',
       body: formData,
     });
@@ -641,7 +642,7 @@ export const generateQuizFromPDF = async (file: File, difficulty: string = 'medi
 
 export const generateQuizFromManualPages = async (pages: string[], difficulty: string = 'medium', subject: string = "Umumiy mavzu", title: string = "Yangi Dars Testi"): Promise<QuizResult | null> => {
   try {
-    const response = await fetch('/api/test/generate', {
+    const response = await fetch(getAbsoluteApiUrl('/api/test/generate'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pages, difficulty, subject, title }),

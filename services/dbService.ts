@@ -1,6 +1,7 @@
 
 import { Order, ChatMessage, EduSubject, Transaction, User, AdminRole, SectionLockMap } from '../types';
 import { securityService } from './securityService';
+import { getAbsoluteApiUrl } from './apiConfig';
 
 const INITIAL_EDU_DATA: EduSubject[] = [
   {
@@ -60,7 +61,7 @@ export const dbService = {
 
   updateUserAvatar: async (email: string, avatarDataUrl: string) => {
     try {
-      const res = await fetch('/api/users/avatar', {
+      const res = await fetch(getAbsoluteApiUrl('/api/users/avatar'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +83,7 @@ export const dbService = {
   // Users
   getUsers: async (): Promise<User[]> => {
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch(getAbsoluteApiUrl('/api/users'));
       if (!res.ok) return [];
       const text = await res.text();
       try {
@@ -99,7 +100,7 @@ export const dbService = {
 
   saveUser: async (user: User) => {
     try {
-      await fetch('/api/auth/register', {
+      await fetch(getAbsoluteApiUrl('/api/auth/register'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(user)
@@ -111,7 +112,7 @@ export const dbService = {
 
   googleLogin: async (googleData: { name: string; email: string; photoURL?: string }) => {
     try {
-      const res = await fetch('/api/auth/google', {
+      const res = await fetch(getAbsoluteApiUrl('/api/auth/google'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(googleData)
@@ -139,7 +140,7 @@ export const dbService = {
 
   githubLogin: async (githubData: { name: string; email: string; photoURL?: string; username?: string }) => {
     try {
-      const res = await fetch('/api/auth/github', {
+      const res = await fetch(getAbsoluteApiUrl('/api/auth/github'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(githubData)
@@ -188,7 +189,7 @@ export const dbService = {
 
   addAdmin: async (admin: User) => {
     try {
-      await fetch('/api/users/admins', {
+      await fetch(getAbsoluteApiUrl('/api/users/admins'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: admin.email, name: admin.name, role: admin.role || 'ADMIN', action: 'add' })
@@ -198,7 +199,7 @@ export const dbService = {
 
   removeAdmin: async (email: string) => {
     try {
-      await fetch('/api/users/admins', {
+      await fetch(getAbsoluteApiUrl('/api/users/admins'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, action: 'remove' })
@@ -211,7 +212,7 @@ export const dbService = {
     const user = dbService.getCurrentUser();
     if (!user) return { balance: 0, transactions: [] };
     try {
-      const res = await fetch('/api/wallet', {
+      const res = await fetch(getAbsoluteApiUrl('/api/wallet'), {
         headers: { 'x-user-email': user.email }
       });
       if (!res.ok) return { balance: 0, transactions: [] };
@@ -231,7 +232,7 @@ export const dbService = {
     if (!user) throw new Error("Not logged in");
 
     try {
-      const res = await fetch('/api/wallet/transaction', {
+      const res = await fetch(getAbsoluteApiUrl('/api/wallet/transaction'), {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -260,13 +261,13 @@ export const dbService = {
   // EDU System - keep using legacy generic one or local fallback since we didn't add full specific endpoints for edu
   getEduSubjects: async (): Promise<EduSubject[]> => {
     try {
-      const res = await fetch('/api/db/edu_data');
+      const res = await fetch(getAbsoluteApiUrl('/api/db/edu_data'));
       if (!res.ok) return INITIAL_EDU_DATA;
       const text = await res.text();
       try {
         const data = JSON.parse(text);
         if (!data || data.length === 0) {
-          await fetch('/api/db/edu_data', {
+          await fetch(getAbsoluteApiUrl('/api/db/edu_data'), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(INITIAL_EDU_DATA)
@@ -296,7 +297,7 @@ export const dbService = {
         }
         return s;
       });
-      await fetch('/api/db/edu_data', {
+      await fetch(getAbsoluteApiUrl('/api/db/edu_data'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated)
@@ -309,7 +310,7 @@ export const dbService = {
   // Marketplace
   getOrders: async (): Promise<Order[]> => {
     try {
-      const res = await fetch('/api/orders');
+      const res = await fetch(getAbsoluteApiUrl('/api/orders'));
       if (!res.ok) return [];
       const text = await res.text();
       try {
@@ -325,7 +326,7 @@ export const dbService = {
 
   addOrder: async (order: Order) => {
     try {
-      await fetch('/api/orders', {
+      await fetch(getAbsoluteApiUrl('/api/orders'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(order)
@@ -338,7 +339,7 @@ export const dbService = {
   // Chat
   getChatHistory: async (userEmail: string): Promise<ChatMessage[]> => {
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch(getAbsoluteApiUrl('/api/chat'), {
         headers: { 'x-user-email': userEmail }
       });
       if (!res.ok) return [];
@@ -356,7 +357,7 @@ export const dbService = {
 
   saveChatMessage: async (userEmail: string, message: ChatMessage) => {
     try {
-      await fetch('/api/chat/message', {
+      await fetch(getAbsoluteApiUrl('/api/chat/message'), {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -372,7 +373,7 @@ export const dbService = {
   // System Section Locks
   getSectionLocks: async (): Promise<SectionLockMap> => {
     try {
-      const res = await fetch('/api/system/section-locks');
+      const res = await fetch(getAbsoluteApiUrl('/api/system/section-locks'));
       if (res.ok) {
         const text = await res.text();
         const data = text ? JSON.parse(text) : null;
@@ -396,7 +397,7 @@ export const dbService = {
   saveSectionLocks: async (locks: SectionLockMap): Promise<boolean> => {
     try {
       localStorage.setItem('st_ai_section_locks_cache', JSON.stringify(locks));
-      const res = await fetch('/api/system/section-locks', {
+      const res = await fetch(getAbsoluteApiUrl('/api/system/section-locks'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ locks })

@@ -8,6 +8,7 @@ import { dbService } from '../services/dbService';
 import { useLanguage } from '../context/LanguageContext';
 import { signInWithGoogleAccount, signInWithGithubAccount } from '../services/firebase';
 import { authenticateWithBiometrics } from '../services/webAuthnService';
+import { getAbsoluteApiUrl } from '../services/apiConfig';
 
 interface AuthProps {
   onLogin: (userData: { name: string; email: string; photoURL?: string; isAdmin?: boolean }) => void;
@@ -44,7 +45,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onBack }) => {
       }
 
       if (isLogin) {
-        const res = await fetch('/api/auth/login', {
+        const res = await fetch(getAbsoluteApiUrl('/api/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: cleanEmail, password })
@@ -72,7 +73,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onBack }) => {
           isAdmin: data.user.isAdmin
         });
       } else {
-        const res = await fetch('/api/auth/register', {
+        const res = await fetch(getAbsoluteApiUrl('/api/auth/register'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
