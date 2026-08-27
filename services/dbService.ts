@@ -126,7 +126,30 @@ export const dbService = {
       return {
         name: googleData.name,
         email: googleData.email,
-        isAdmin: false
+        isAdmin: googleData.email === 'dilnuramadaminova06@gmail.com'
+      } as User;
+    }
+  },
+
+  githubLogin: async (githubData: { name: string; email: string; photoURL?: string; username?: string }) => {
+    try {
+      const res = await fetch('/api/auth/github', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(githubData)
+      });
+      if (!res.ok) {
+        throw new Error('GitHub authentication backend sync failed');
+      }
+      const data = await res.json();
+      return data.user as User;
+    } catch (e) {
+      console.error("githubLogin failed", e);
+      return {
+        name: githubData.name,
+        email: githubData.email,
+        photoURL: githubData.photoURL,
+        isAdmin: githubData.email === 'dilnuramadaminova06@gmail.com'
       } as User;
     }
   },

@@ -322,6 +322,9 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Cloudflare, Reverse Proxy & Load Balancer Trust Proxy Configuration
+  app.set('trust proxy', true);
+
   // Rate Limiter Memory Storage & Telemetry
   const ipRequestCounts: Record<string, { count: number; resetTime: number; authCount: number }> = {};
   let totalBlockedAttacks = 0;
@@ -339,9 +342,10 @@ async function startServer() {
     next();
   });
 
-  // Security Middleware 2: Dynamic IP Rate Limiting & DoS Shield
+  // Security Middleware 2: Dynamic IP Rate Limiting & DoS Shield (Cloudflare / Proxy Aware)
   app.use((req, res, next) => {
-    const clientIp = (req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1').split(',')[0].trim();
+    const rawIp = (req.headers['cf-connecting-ip'] as string) || (req.headers['x-forwarded-for'] as string) || (req.headers['x-real-ip'] as string) || req.socket.remoteAddress || '127.0.0.1';
+    const clientIp = rawIp.split(',')[0].trim();
     const now = Date.now();
 
     if (!ipRequestCounts[clientIp] || ipRequestCounts[clientIp].resetTime < now) {
@@ -353,8 +357,8 @@ async function startServer() {
     const isAuthRoute = req.path.startsWith('/api/auth') || req.path.startsWith('/api/webauthn');
     if (isAuthRoute) {
       ipRequestCounts[clientIp].authCount++;
-      // Limit auth attempts to 20 per minute to prevent brute-force
-      if (ipRequestCounts[clientIp].authCount > 20) {
+      // Limit auth attempts to 25 per minute to prevent brute-force
+      if (ipRequestCounts[clientIp].authCount > 25) {
         totalBlockedAttacks++;
         threatLogStream.unshift({
           id: `threat_bf_${Date.now()}`,
@@ -369,8 +373,8 @@ async function startServer() {
       }
     }
 
-    // Limit general requests to 300 per minute per IP
-    if (ipRequestCounts[clientIp].count > 300) {
+    // Limit general requests to 400 per minute per IP
+    if (ipRequestCounts[clientIp].count > 400) {
       totalBlockedAttacks++;
       threatLogStream.unshift({
         id: `threat_dos_${Date.now()}`,
@@ -387,7 +391,10 @@ async function startServer() {
     next();
   });
 
-  app.use(cors());
+  app.use(cors({
+    origin: true,
+    credentials: true
+  }));
   app.use(express.json({ limit: '50mb', strict: false }));
 
   // Security Middleware 3: Payload XSS & NoSQL Sanitizer
@@ -995,27 +1002,107 @@ async function startServer() {
     if (!email) {
       return res.status(400).json({ error: "Email talab qilinadi!" });
     }
-    let user = users.find((u: any) => u.email === email);
+    const cleanEmail = email.toLowerCase().trim();
+    let user = users.find((u: any) => u.email.toLowerCase() === cleanEmail);
     if (!user) {
       const maxId = users.reduce((max: number, u: any) => (u.id && u.id > max ? u.id : max), 0);
       user = {
         id: maxId + 1,
-        email,
-        name: name || email.split('@')[0],
+        email: cleanEmail,
+        name: name || cleanEmail.split('@')[0],
         password: "google_oauth_protected",
         photoURL: photoURL || "",
-        isAdmin: users.length === 0,
-        role: users.length === 0 ? 'SUPER_ADMIN' : 'USER',
+        isAdmin: users.length === 0 || cleanEmail === 'dilnuramadaminova06@gmail.com',
+        role: (users.length === 0 || cleanEmail === 'dilnuramadaminova06@gmail.com') ? 'SUPER_ADMIN' : 'USER',
         createdAt: new Date(),
         authProvider: 'google'
       };
       users.push(user);
     } else {
-      if (name && (!user.name || user.name === email.split('@')[0])) user.name = name;
+      if (name && (!user.name || user.name === cleanEmail.split('@')[0])) user.name = name;
       if (photoURL && !user.photoURL) user.photoURL = photoURL;
       user.authProvider = 'google';
+      if (cleanEmail === 'dilnuramadaminova06@gmail.com') {
+        user.isAdmin = true;
+        user.role = 'SUPER_ADMIN';
+      }
     }
     await writeData("users", users);
+
+    // Sync user document to Cloud Firestore
+    const db = await getFirestoreDb();
+    if (db) {
+      try {
+        const { doc, setDoc } = await import('firebase/firestore') as any;
+        await setDoc(doc(db, 'users', String(user.id)), {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          photoURL: user.photoURL || '',
+          isAdmin: !!user.isAdmin,
+          role: user.role || 'USER',
+          authProvider: 'google',
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (err: any) {
+        console.warn("[Firestore Sync Google User Warning]:", err.message);
+      }
+    }
+
+    res.json({ user });
+  });
+
+  app.post("/api/auth/github", async (req, res) => {
+    const users = await getUsersWithSequentialIds();
+    const { email, name, photoURL, username } = req.body;
+    const finalEmail = (email || `${username || 'user'}_github@student.ai`).toLowerCase().trim();
+    
+    let user = users.find((u: any) => u.email.toLowerCase() === finalEmail);
+    if (!user) {
+      const maxId = users.reduce((max: number, u: any) => (u.id && u.id > max ? u.id : max), 0);
+      user = {
+        id: maxId + 1,
+        email: finalEmail,
+        name: name || username || finalEmail.split('@')[0],
+        password: "github_oauth_protected",
+        photoURL: photoURL || "",
+        isAdmin: users.length === 0 || finalEmail === 'dilnuramadaminova06@gmail.com',
+        role: (users.length === 0 || finalEmail === 'dilnuramadaminova06@gmail.com') ? 'SUPER_ADMIN' : 'USER',
+        createdAt: new Date(),
+        authProvider: 'github'
+      };
+      users.push(user);
+    } else {
+      if (name && (!user.name || user.name === finalEmail.split('@')[0])) user.name = name;
+      if (photoURL && !user.photoURL) user.photoURL = photoURL;
+      user.authProvider = 'github';
+      if (finalEmail === 'dilnuramadaminova06@gmail.com') {
+        user.isAdmin = true;
+        user.role = 'SUPER_ADMIN';
+      }
+    }
+    await writeData("users", users);
+
+    // Sync user document to Cloud Firestore
+    const db = await getFirestoreDb();
+    if (db) {
+      try {
+        const { doc, setDoc } = await import('firebase/firestore') as any;
+        await setDoc(doc(db, 'users', String(user.id)), {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          photoURL: user.photoURL || '',
+          isAdmin: !!user.isAdmin,
+          role: user.role || 'USER',
+          authProvider: 'github',
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (err: any) {
+        console.warn("[Firestore Sync GitHub User Warning]:", err.message);
+      }
+    }
+
     res.json({ user });
   });
 
@@ -1063,10 +1150,12 @@ async function startServer() {
       const challengeBuffer = crypto.randomBytes(32);
       const challenge = challengeBuffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
-      // Standard Relying Party (RP) configuration
+      // Standard Relying Party (RP) configuration (Cloudflare & custom domain aware)
+      const rawHost = req.hostname || (req.headers.host as string) || "localhost";
+      const cleanHost = rawHost.split(':')[0];
       const rp = {
         name: "Student AI Pro",
-        id: req.hostname || "localhost"
+        id: cleanHost
       };
 
       const user = {
