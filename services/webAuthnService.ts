@@ -48,15 +48,6 @@ export async function checkWebAuthnSupport(): Promise<WebAuthnSupportStatus> {
   return { isSupported, isPlatformAvailable };
 }
 
-async function safeJsonParse(res: Response): Promise<any> {
-  try {
-    const text = await res.text();
-    return text ? JSON.parse(text) : {};
-  } catch {
-    return {};
-  }
-}
-
 /**
  * Registers a new hardware-backed Biometric (Passkey / Fingerprint / FaceID) credential for a user.
  */
@@ -75,11 +66,11 @@ export async function registerBiometricCredential(email: string, name: string): 
     });
 
     if (!optRes.ok) {
-      const err = await safeJsonParse(optRes);
+      const err = await optRes.json();
       throw new Error(err.error || "Serverdan biometrik parametrlarni olishda xatolik");
     }
 
-    const options = await safeJsonParse(optRes);
+    const options = await optRes.json();
 
     // 2. Format options for browser navigator.credentials.create API
     const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
@@ -144,11 +135,11 @@ export async function registerBiometricCredential(email: string, name: string): 
     });
 
     if (!verifyRes.ok) {
-      const err = await safeJsonParse(verifyRes);
+      const err = await verifyRes.json();
       throw new Error(err.error || "Biometrik kalitni serverda saqlashda xatolik");
     }
 
-    const verifyData = await safeJsonParse(verifyRes);
+    const verifyData = await verifyRes.json();
     return { success: true, credentialId: credential.id, message: verifyData.message };
   } catch (error: any) {
     console.error("[WebAuthn Registration Error]:", error);
@@ -174,11 +165,11 @@ export async function authenticateWithBiometrics(userEmail?: string): Promise<{ 
     });
 
     if (!optRes.ok) {
-      const err = await safeJsonParse(optRes);
+      const err = await optRes.json();
       throw new Error(err.error || "Biometrik kirish sozlamalarini olishda xatolik");
     }
 
-    const options = await safeJsonParse(optRes);
+    const options = await optRes.json();
 
     if (!options.allowCredentials || options.allowCredentials.length === 0) {
       throw new Error("Ushbu akkaunt (yoki qurilma) uchun birorta ham biometrik kalit ro'yxatdan o'tmagan. Avval parolingiz bilan kirib, Sozlamalardan biometrik kalit biriktiring.");
@@ -235,11 +226,11 @@ export async function authenticateWithBiometrics(userEmail?: string): Promise<{ 
     });
 
     if (!verifyRes.ok) {
-      const err = await safeJsonParse(verifyRes);
+      const err = await verifyRes.json();
       throw new Error(err.error || "Biometrik kalit server tomonidan tasdiqlanmadi.");
     }
 
-    const data = await safeJsonParse(verifyRes);
+    const data = await verifyRes.json();
     return { success: true, user: data.user, message: "Biometrik autentifikatsiya muvaffaqiyatli o'tdi!" };
   } catch (error: any) {
     console.error("[WebAuthn Authentication Error]:", error);
@@ -254,7 +245,7 @@ export async function getUserBiometricKeys(email: string): Promise<any[]> {
   try {
     const res = await fetch(getAbsoluteApiUrl(`/api/webauthn/user-credentials?email=${encodeURIComponent(email)}`));
     if (res.ok) {
-      const data = await safeJsonParse(res);
+      const data = await res.json();
       return data.credentials || [];
     }
   } catch (err) {

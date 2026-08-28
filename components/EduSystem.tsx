@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { dbService } from '../services/dbService';
 import { EduSubject } from '../types';
-import { getAbsoluteApiUrl } from '../services/apiConfig';
 import { 
   User, BookOpen, Calendar, Star, FileText, CheckCircle2, 
   Clock, Download, LayoutGrid, MoreVertical, Upload, Users, CheckSquare
@@ -33,7 +32,7 @@ export const EduSystem: React.FC = () => {
 
   const handleHemisSync = async () => {
     try {
-      const response = await fetch(getAbsoluteApiUrl('/api/hemis/sync'), { method: 'POST' });
+      const response = await fetch('/api/hemis/sync', { method: 'POST' });
       const data = await response.json();
       if (data.success) {
         alert(data.message);

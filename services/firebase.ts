@@ -2,7 +2,6 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  GithubAuthProvider,
   signInWithPopup, 
   signOut as firebaseSignOut,
   User as FirebaseUser 
@@ -19,10 +18,6 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-export const githubProvider = new GithubAuthProvider();
-githubProvider.addScope('read:user');
-githubProvider.addScope('user:email');
-
 export const signInWithGoogleAccount = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -31,8 +26,7 @@ export const signInWithGoogleAccount = async () => {
       uid: user.uid,
       name: user.displayName || user.email?.split('@')[0] || 'Foydalanuvchi',
       email: user.email || '',
-      photoURL: user.photoURL || '',
-      authProvider: 'google'
+      photoURL: user.photoURL || ''
     };
   } catch (error: any) {
     console.error('Google Auth Error:', error);
@@ -45,31 +39,6 @@ export const signInWithGoogleAccount = async () => {
       throw new Error("Bir vaqtda bir nechta kirish so'rovi yuborildi.");
     } else {
       throw new Error(error.message || "Google orqali kirishda xatolik yuz berdi");
-    }
-  }
-};
-
-export const signInWithGithubAccount = async () => {
-  try {
-    const result = await signInWithPopup(auth, githubProvider);
-    const user = result.user;
-    return {
-      uid: user.uid,
-      name: user.displayName || user.email?.split('@')[0] || 'GitHub User',
-      email: user.email || `${user.uid}@github.user`,
-      photoURL: user.photoURL || '',
-      authProvider: 'github'
-    };
-  } catch (error: any) {
-    console.error('GitHub Auth Error:', error);
-    if (error.code === 'auth/popup-closed-by-user') {
-      throw new Error("GitHub kirish oynasi yopildi. Qaytadan urinib ko'ring.");
-    } else if (error.code === 'auth/popup-blocked') {
-      throw new Error("Pop-up oyna brauzeringiz tomonidan bloklandi. Iltimos ruxsat bering.");
-    } else if (error.code === 'auth/account-exists-with-different-credential') {
-      throw new Error("Ushbu email bilan boshqa kirish usuli bog'langan.");
-    } else {
-      throw new Error(error.message || "GitHub orqali kirishda xatolik yuz berdi");
     }
   }
 };
