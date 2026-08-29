@@ -448,6 +448,54 @@ export async function onRequest(context: EventContext): Promise<Response> {
       });
     }
 
+    // Parse Document Endpoint for Cloudflare Edge
+    if (pathname === "/api/parse-document") {
+      const body = await request.json().catch(() => ({}));
+      const { fileBase64, fileName = "doc.txt" } = body;
+      if (!fileBase64) {
+        return jsonResponse({ error: "Fayl jo'natilmadi" }, 400);
+      }
+      try {
+        const binStr = atob(fileBase64);
+        let text = "";
+        try {
+          const bytes = Uint8Array.from(binStr, c => c.charCodeAt(0));
+          const decoder = new TextDecoder("utf-8", { fatal: false });
+          text = decoder.decode(bytes);
+        } catch {
+          text = binStr;
+        }
+
+        // Clean binary noise if any
+        let cleaned = text.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F-\x9F]/g, " ").replace(/\s+/g, " ").trim();
+        const paragraphs = cleaned.split(/\n+/);
+        const pages: string[] = [];
+        let curr = "";
+        for (const p of paragraphs) {
+          if (curr.length + p.length > 2000 && curr.length > 0) {
+            pages.push(curr.trim());
+            curr = p;
+          } else {
+            curr += (curr ? "\n\n" : "") + p;
+          }
+        }
+        if (curr) pages.push(curr.trim());
+        if (pages.length === 0) pages.push("(Hujjat bo'sh)");
+
+        return jsonResponse({ pages });
+      } catch (err: any) {
+        return jsonResponse({ error: "Faylni tahlil qilishda xatolik: " + err.message }, 500);
+      }
+    }
+
+    // AI Live Token
+    if (pathname === "/api/ai/live/token") {
+      return jsonResponse({
+        token: "cf_edge_live_token_" + Date.now(),
+        endpoint: "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent"
+      });
+    }
+
     // Test Generate / Parse Document
     if (pathname === "/api/test/generate") {
       const body = await request.json().catch(() => ({}));
