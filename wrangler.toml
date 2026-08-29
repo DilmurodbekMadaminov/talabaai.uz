@@ -1,4 +1,10 @@
 name = "student-ai"
+main = "worker.ts"
 compatibility_date = "2026-08-28"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "dist"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+

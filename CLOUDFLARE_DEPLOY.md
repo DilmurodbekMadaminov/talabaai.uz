@@ -31,15 +31,25 @@ Loyihani Cloudflare Pages platformasida 100% to'liq va uzluksiz ishga tushirish 
 
 ---
 
-## ⚡ 2-Usul: Wrangler CLI orqali to'g'ridan-to'g'ri terminaldan deploy qilish
+## ⚡ 2-Usul: Wrangler CLI orqali to'g'ridan-to'g'ri deploy qilish
 
-Agar loyihani to'g'ridan-to'g'ri terminal orqali Cloudflare'ga chiqarmoqchi bo'lsangiz:
+Loyiha ham **Cloudflare Workers (Static Assets)**, ham **Cloudflare Pages** bilan to'liq moslashtirilgan:
 
+### A) Cloudflare Workers bilan (yoki oddiy `wrangler deploy`):
 ```bash
-# 1. Loyihani quring
+# 1. Loyihaning frontend qismini yig'ish
 npm run build:cf
 
-# 2. Cloudflare'ga bevosita deploy qiling
+# 2. To'g'ridan-to'g'ri deploy qilish (wrangler.jsonc / wrangler.toml avtomatik ishlaydi)
+npx wrangler deploy
+```
+
+### B) Cloudflare Pages bilan (`wrangler pages deploy`):
+```bash
+# 1. Loyihani yig'ish
+npm run build:cf
+
+# 2. Pages ga deploy qilish
 npx wrangler pages deploy dist --project-name=student-ai
 ```
 
