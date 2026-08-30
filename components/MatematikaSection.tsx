@@ -483,193 +483,135 @@ export const MatematikaSection: React.FC<{ user?: User | null }> = ({ user }) =>
         </div>
       </div>
 
-      {/* Filter and Search Bar or PRO Lock Notice */}
-      {!isPro ? (
-        <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950 rounded-[3rem] p-8 md:p-14 text-white border border-amber-500/30 shadow-2xl relative overflow-hidden space-y-6">
-          <div className="relative z-10 max-w-2xl space-y-6">
-            <div className="inline-flex items-center gap-2 bg-amber-400/20 text-amber-300 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-400/30">
-              <Lock size={14} className="text-amber-400" /> PRO Obuna Talab Etiladi
-            </div>
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Fanlar bo'yicha qidirish..."
+            className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-3 text-xs font-semibold outline-none focus:border-primary focus:bg-white transition-all text-slate-800"
+          />
+        </div>
 
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-tight text-white">
-              Standart Quiz Bo'limi <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-200">
-                Qulflangan
-              </span>
-            </h2>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button 
+            onClick={() => fetchSubjects()}
+            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all cursor-pointer"
+          >
+            Yangilash
+          </button>
+        </div>
+      </div>
 
-            <p className="text-slate-300 text-sm md:text-base font-medium leading-relaxed">
-              Standart Quiz platformasidan, barcha akademik fanlar, variantlar hamda AI test generatoridan foydalanish uchun <strong>PRO versiya</strong> xarid qilishingiz yoki promo-kodni kiritishingiz lozim.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3.5">
-                <div className="p-3 bg-amber-500/20 text-amber-400 rounded-xl flex-shrink-0">
-                  <Crown size={22} />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black uppercase text-white">Cheksiz Testlar</h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Barcha fanlar va javoblar tahlili</p>
-                </div>
-              </div>
-
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3.5">
-                <div className="p-3 bg-amber-500/20 text-amber-400 rounded-xl flex-shrink-0">
-                  <Sparkles size={22} />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black uppercase text-white">Promo-Kod bilan Bepul</h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Admin promo-kodi orqali oching</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                onClick={() => setShowProModal(true)}
-                className="px-8 py-4 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5 cursor-pointer"
-              >
-                <Lock size={16} />
-                <span>PRO Versiyaga O'tish / Promo-Kod</span>
-              </button>
-            </div>
-          </div>
-
-          <Calculator size={360} className="absolute -bottom-16 -right-16 text-white/5 rotate-12 pointer-events-none" />
+      {/* Subjects & Variant Cards */}
+      {isLoadingSubjects ? (
+        <div className="py-20 text-center space-y-4">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Standart quiz baza yuklanmoqda...</p>
+        </div>
+      ) : subjectsList.length === 0 ? (
+        <div className="bg-white rounded-3xl p-12 text-center space-y-4 border border-slate-200/80">
+          <HelpCircle size={48} className="mx-auto text-slate-300" />
+          <h3 className="text-lg font-black text-slate-800">Test darsliklari topilmadi</h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto">
+            Hozircha matematika yoki boshqa fanlar bo'yicha testlar kiritilmagan. Quyidagi AI yordamchisidan foydalanib PDF yuklang yoki yangi test to'plami yarating.
+          </p>
         </div>
       ) : (
-        <>
-          {/* Filter and Search Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                type="text" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Fanlar bo'yicha qidirish..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-3 text-xs font-semibold outline-none focus:border-primary focus:bg-white transition-all text-slate-800"
-              />
-            </div>
+        <div className="space-y-12">
+          {subjectsList.map((subject) => {
+            const variantCount = totalVariantsForSubjectLocal(subject.id);
+            if (variantCount === 0 && !subject.questions.length) return null;
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <button 
-                onClick={() => fetchSubjects()}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all"
-              >
-                Yangilash
-              </button>
-            </div>
-          </div>
-
-          {/* Subjects & Variant Cards */}
-          {isLoadingSubjects ? (
-            <div className="py-20 text-center space-y-4">
-              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Standart quiz baza yuklanmoqda...</p>
-            </div>
-          ) : subjectsList.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center space-y-4 border border-slate-200/80">
-              <HelpCircle size={48} className="mx-auto text-slate-300" />
-              <h3 className="text-lg font-black text-slate-800">Test darsliklari topilmadi</h3>
-              <p className="text-xs text-slate-400 max-w-md mx-auto">
-                Hozircha matematika yoki boshqa fanlar bo'yicha testlar kiritilmagan. Quyidagi AI yordamchisidan foydalanib PDF yuklang yoki yangi test to'plami yarating.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-12">
-              {subjectsList.map((subject) => {
-                const variantCount = totalVariantsForSubjectLocal(subject.id);
-                if (variantCount === 0 && !subject.questions.length) return null;
-
-                return (
-                  <div key={subject.id} className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-5 gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center flex-shrink-0 font-black">
-                          <BookOpen size={24} />
-                        </div>
-                        <div>
-                          <h2 className="text-xl font-black text-slate-900 tracking-tight">
-                            {subject.name}
-                          </h2>
-                          {subject.creator && (
-                            <p className="text-[10px] font-mono font-bold text-slate-400">
-                              Muallif: {subject.creator.includes('@') ? subject.creator.split('@')[0] : subject.creator}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 self-end sm:self-auto">
-                        <span className="bg-primary/10 text-primary font-black px-3.5 py-1.5 rounded-full text-xs">
-                          {subject.questions.length} ta savol
-                        </span>
-                        <button
-                          onClick={() => setEditingSubject(subject)}
-                          className="px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl transition-all font-bold text-xs flex items-center gap-1.5"
-                          title="Split-Screen test tahrirlash"
-                        >
-                          <Edit3 size={14} /> Tahrirlash
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSubject(subject.id, subject.name)}
-                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-                          title="O'chirish"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+            return (
+              <div key={subject.id} className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-5 gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center flex-shrink-0 font-black">
+                      <BookOpen size={24} />
                     </div>
-
-                    {/* Variant cards grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {Array.from({ length: Math.max(variantCount, 1) }, (_, i) => i + 1).map(v => {
-                        const questionCount = getQuestionsByVariantLocal(subject.id, v).length;
-                        return (
-                          <div
-                            key={v}
-                            onClick={() => selectVariant(subject.id, v)}
-                            className="bg-slate-50 hover:bg-primary/5 p-5 rounded-2xl border border-slate-200/80 hover:border-primary transition-all text-left cursor-pointer group relative shadow-xs"
-                          >
-                            <button
-                              onClick={(e) => copyShareLink(e, subject.id, v)}
-                              className="absolute top-3 right-3 p-1.5 bg-white rounded-lg text-slate-400 hover:text-primary transition-colors border border-slate-100 shadow-xs"
-                              title="Variant havolasini nusxalash"
-                            >
-                              <Share2 size={12} />
-                            </button>
-                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center mb-3 text-slate-400 group-hover:text-primary group-hover:scale-110 transition-all border border-slate-100 shadow-xs">
-                              <LayoutGrid size={18} />
-                            </div>
-                            <h3 className="font-black text-slate-900 text-sm">{v}-Variant</h3>
-                            <p className="text-[10px] font-bold text-slate-400 mt-0.5">{questionCount} ta savol</p>
-                          </div>
-                        );
-                      })}
+                    <div>
+                      <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                        {subject.name}
+                      </h2>
+                      {subject.creator && (
+                        <p className="text-[10px] font-mono font-bold text-slate-400">
+                          Muallif: {subject.creator.includes('@') ? subject.creator.split('@')[0] : subject.creator}
+                        </p>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
 
-          {/* Embedded AI Chat & PDF Question Generator */}
-          <div id="chat-generator" className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-200/80 shadow-sm">
-            <div className="mb-6">
-              <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3.5 py-1 rounded-full">
-                AI Yordamchi & Generator
-              </span>
-              <h2 className="text-xl font-black text-slate-900 mt-2">PDF va Matnlardan Test Generatori</h2>
-              <p className="text-xs text-slate-400 font-medium">
-                Imtihon savollarini AI yordamida avtomatik ajratib oling, PDF darslik yuklang yoki matematik masalalarni bosqichma-bosqich yeching.
-              </p>
-            </div>
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <span className="bg-primary/10 text-primary font-black px-3.5 py-1.5 rounded-full text-xs">
+                      {subject.questions.length} ta savol
+                    </span>
+                    <button
+                      onClick={() => setEditingSubject(subject)}
+                      className="px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl transition-all font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                      title="Split-Screen test tahrirlash"
+                    >
+                      <Edit3 size={14} /> Tahrirlash
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSubject(subject.id, subject.name)}
+                      className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
+                      title="O'chirish"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
 
-            <Chat onQuestionsLoaded={handleQuestionsLoaded} userEmail={userEmail} />
-          </div>
-        </>
+                {/* Variant cards grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {Array.from({ length: Math.max(variantCount, 1) }, (_, i) => i + 1).map(v => {
+                    const questionCount = getQuestionsByVariantLocal(subject.id, v).length;
+                    return (
+                      <div
+                        key={v}
+                        onClick={() => selectVariant(subject.id, v)}
+                        className="bg-slate-50 hover:bg-primary/5 p-5 rounded-2xl border border-slate-200/80 hover:border-primary transition-all text-left cursor-pointer group relative shadow-xs"
+                      >
+                        <button
+                          onClick={(e) => copyShareLink(e, subject.id, v)}
+                          className="absolute top-3 right-3 p-1.5 bg-white rounded-lg text-slate-400 hover:text-primary transition-colors border border-slate-100 shadow-xs cursor-pointer"
+                          title="Variant havolasini nusxalash"
+                        >
+                          <Share2 size={12} />
+                        </button>
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center mb-3 text-slate-400 group-hover:text-primary group-hover:scale-110 transition-all border border-slate-100 shadow-xs">
+                          <LayoutGrid size={18} />
+                        </div>
+                        <h3 className="font-black text-slate-900 text-sm">{v}-Variant</h3>
+                        <p className="text-[10px] font-bold text-slate-400 mt-0.5">{questionCount} ta savol</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
+
+      {/* Embedded AI Chat & PDF Question Generator */}
+      <div id="chat-generator" className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-200/80 shadow-sm">
+        <div className="mb-6">
+          <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3.5 py-1 rounded-full">
+            AI Yordamchi & Generator
+          </span>
+          <h2 className="text-xl font-black text-slate-900 mt-2">PDF va Matnlardan Test Generatori</h2>
+          <p className="text-xs text-slate-400 font-medium">
+            Imtihon savollarini AI yordamida avtomatik ajratib oling, PDF darslik yuklang yoki matematik masalalarni bosqichma-bosqich yeching.
+          </p>
+        </div>
+
+        <Chat onQuestionsLoaded={handleQuestionsLoaded} userEmail={userEmail} />
+      </div>
 
       {/* Toast Notification */}
       {toastMessage && (

@@ -1,0 +1,176 @@
+{
+  "entities": {
+    "Subject": {
+      "title": "Subject",
+      "description": "Educational subject or quiz question bank collection",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the subject"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the subject or test collection",
+          "maxLength": 200
+        },
+        "variantSize": {
+          "type": "number",
+          "description": "Number of questions in a test variant"
+        },
+        "creator": {
+          "type": "string",
+          "description": "Creator email or 'system'"
+        },
+        "description": {
+          "type": "string",
+          "description": "Overview of subject content"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon identifier"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        },
+        "questions": {
+          "type": "array",
+          "description": "Array of test questions"
+        }
+      },
+      "required": ["id", "name"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Registered student or admin user profile",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "description": "Sequential user ID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the user"
+        },
+        "role": {
+          "type": "string",
+          "description": "Role: USER, ADMIN, SUPER_ADMIN"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Avatar image data or URL"
+        }
+      },
+      "required": ["email"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Marketplace order or request",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "authorEmail": {
+          "type": "string"
+        }
+      },
+      "required": ["title", "price"]
+    },
+    "Job": {
+      "title": "Job",
+      "description": "Freelance marketplace job posting",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "budget": {
+          "type": "number"
+        },
+        "clientEmail": {
+          "type": "string"
+        }
+      },
+      "required": ["title", "budget"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System or targeted notification",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        }
+      },
+      "required": ["title", "message"]
+    },
+    "SectionLock": {
+      "title": "SectionLock",
+      "description": "Dynamic section locks",
+      "type": "object",
+      "properties": {
+        "isLocked": {
+          "type": "boolean"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/subjects/{subjectId}": {
+      "schema": "Subject",
+      "description": "Educational subjects and question bank quizzes"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Registered user accounts"
+    },
+    "/user_data/{userId}": {
+      "schema": "User",
+      "description": "User preferences, personal chats and wallet balances"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Marketplace student study material orders"
+    },
+    "/jobs/{jobId}": {
+      "schema": "Job",
+      "description": "Freelance marketplace jobs"
+    },
+    "/notifications/{notifId}": {
+      "schema": "Notification",
+      "description": "System notices and broadcast alerts"
+    },
+    "/section_locks/{lockId}": {
+      "schema": "SectionLock",
+      "description": "Section lock toggles and settings"
+    }
+  }
+}
